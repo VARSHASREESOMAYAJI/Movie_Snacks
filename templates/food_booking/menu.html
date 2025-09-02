@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Menu - MovieSnacks{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Food Menu Section -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-3xl font-bold text-movie-dark mb-6 text-center">
+                🍿 Food & Drinks Menu
+            </h2>
+            
+            {% if food_items %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for item in food_items %}
+                        <div class="food-card bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="text-lg font-semibold text-movie-dark">{{ item.name }}</h3>
+                                <span class="text-xl font-bold text-movie-gold">₹{{ item.price }}</span>
+                            </div>
+                            
+                            <p class="text-gray-600 text-sm mb-4">{{ item.description }}</p>
+                            
+                            <form method="post" action="{% url 'food_booking:add_to_cart' %}" class="flex items-center space-x-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="food_item_id" value="{{ item.id }}">
+                                
+                                <div class="flex items-center space-x-2">
+                                    <label for="quantity-{{ item.id }}" class="text-sm font-medium text-gray-700">Qty:</label>
+                                    <input type="number" 
+                                           name="quantity" 
+                                           id="quantity-{{ item.id }}"
+                                           value="1" 
+                                           min="1" 
+                                           max="10"
+                                           class="w-16 px-2 py-1 border border-gray-300 rounded-md text-center text-sm">
+                                </div>
+                                
+                                <button type="submit" 
+                                        class="bg-movie-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Add to Cart
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="text-6xl mb-4">🍿</div>
+                    <h3 class="text-xl text-gray-600 mb-2">No food items available</h3>
+                    <p class="text-gray-500">Please check back later or contact staff.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Shopping Cart Section -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-md p-6 sticky top-8">
+            <h3 class="text-2xl font-bold text-movie-dark mb-6 text-center">
+                🛒 Your Cart
+            </h3>
+            
+            {% if cart %}
+                <div class="space-y-4 mb-6">
+                    {% for item_id, item in cart.items %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-movie-dark">{{ item.name }}</h4>
+                                <p class="text-sm text-gray-600">₹{{ item.price }} × {{ item.quantity }}</p>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <form method="post" action="{% url 'food_booking:update_cart' %}" class="flex items-center space-x-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="item_id" value="{{ item_id }}">
+                                    <input type="number" 
+                                           name="quantity" 
+                                           value="{{ item.quantity }}" 
+                                           min="0" 
+                                           max="10"
+                                           class="w-16 px-2 py-1 border border-gray-300 rounded-md text-center text-sm">
+                                    <button type="submit" 
+                                            class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        Update
+                                    </button>
+                                </form>
+                                
+                                <form method="post" action="{% url 'food_booking:remove_from_cart' item_id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="border-t pt-4 mb-6">
+                    <div class="flex justify-between items-center text-lg font-semibold">
+                        <span>Total:</span>
+                        <span class="text-movie-gold">₹{{ cart_total|floatformat:2 }}</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'food_booking:order_form' %}" 
+                       class="w-full bg-movie-gold hover:bg-yellow-600 text-white py-3 px-4 rounded-md font-medium text-center block transition-colors">
+                        Proceed to Order
+                    </a>
+                    
+                    <form method="post" action="{% url 'food_booking:clear_cart' %}" class="w-full">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md font-medium transition-colors">
+                            Clear Cart
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="text-4xl mb-4">🛒</div>
+                    <h4 class="text-lg text-gray-600 mb-2">Your cart is empty</h4>
+                    <p class="text-gray-500 text-sm">Add some delicious items from the menu!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Order Instructions -->
+<div class="mt-12 bg-gradient-to-r from-movie-dark to-gray-800 rounded-lg shadow-lg p-8 text-white">
+    <div class="text-center">
+        <h3 class="text-2xl font-bold mb-4">🎬 How to Order</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+            <div class="text-center">
+                <div class="text-3xl mb-2">📱</div>
+                <h4 class="font-semibold mb-2">1. Scan QR Code</h4>
+                <p class="text-gray-300 text-sm">Scan the QR code at your seat</p>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl mb-2">🪑</div>
+                <h4 class="font-semibold mb-2">2. Select Seat</h4>
+                <p class="text-gray-300 text-sm">Select row (A-Z) then seat (1-30)</p>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl mb-2">🍕</div>
+                <h4 class="font-semibold mb-2">3. Choose Food</h4>
+                <p class="text-gray-300 text-sm">Add items to your cart</p>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl mb-2">💳</div>
+                <h4 class="font-semibold mb-2">4. Pay & Enjoy</h4>
+                <p class="text-gray-300 text-sm">Pay via UPI or cash</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-update cart count in navigation
+    function updateCartCount() {
+        const cartItems = document.querySelectorAll('[data-cart-item]');
+        let totalCount = 0;
+        
+        cartItems.forEach(item => {
+            const quantity = parseInt(item.querySelector('input[name="quantity"]').value);
+            totalCount += quantity;
+        });
+        
+        // Update cart badge if it exists
+        const cartBadge = document.querySelector('.cart-badge');
+        if (cartBadge) {
+            cartBadge.textContent = totalCount;
+            if (totalCount === 0) {
+                cartBadge.style.display = 'none';
+            } else {
+                cartBadge.style.display = 'flex';
+            }
+        }
+    }
+    
+    // Add event listeners for quantity changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInputs = document.querySelectorAll('input[name="quantity"]');
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', updateCartCount);
+        });
+    });
+</script>
+{% endblock %}
